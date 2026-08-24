@@ -40,6 +40,18 @@ UPLOAD_DIR = BASE_DIR / "uploads"
 DEFAULT_CONFIDENCE = 0.30
 DEFAULT_IOU = 0.50
 
+# ============================================================
+# Detection Classes
+# ============================================================
+
+PLAYER_CLASSES = {
+    "player",
+    "goalkeeper",
+}
+
+REFEREE_CLASS = "referee"
+
+BALL_CLASS = "ball"
 
 # ============================================================
 # Video Configuration

@@ -1,6 +1,12 @@
 from ultralytics import YOLO
 
-from config import MODEL_PATH, DEFAULT_CONFIDENCE
+from config import (
+    MODEL_PATH,
+    DEFAULT_CONFIDENCE,
+    PLAYER_CLASSES,
+    REFEREE_CLASS,
+    BALL_CLASS,
+)
 
 
 class YOLODetector:
@@ -67,3 +73,51 @@ class YOLODetector:
             detections.append(detection)
 
         return detections
+
+
+    def get_players(self, detections):
+        """
+        Return player and goalkeeper detections.
+        """
+
+        return [
+            detection
+            for detection in detections
+            if detection["class_name"] in PLAYER_CLASSES
+        ]
+
+    def get_referees(self, detections):
+        """
+        Return referee detections.
+        """
+
+        return [
+            detection
+            for detection in detections
+            if detection["class_name"] == REFEREE_CLASS
+        ]
+
+    def get_ball(self, detections):
+        """
+        Return ball detections.
+
+        Returns:
+            dict or None
+        """
+
+        balls = [
+            detection
+            for detection in detections
+            if detection["class_name"] == BALL_CLASS
+        ]
+
+        if not balls:
+            return None
+
+        # Highest-confidence ball detection
+        return max(
+            balls,
+            key=lambda detection: detection["confidence"],
+        )
+
+        
