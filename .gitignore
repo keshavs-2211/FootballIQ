@@ -1,1 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# YOLO model files
 *.pt
+
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Generated outputs
+outputs/*
+!outputs/**/
+!outputs/*/.gitkeep
+
+# Uploaded files
+uploads/*
+!uploads/.gitkeep
+
+# Temporary files
+*.tmp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
