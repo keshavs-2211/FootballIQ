@@ -1,12 +1,18 @@
 from utils.video_reader import VideoReader
 from utils.video_writer import VideoWriter
+from detector.yolo_detector import YOLODetector
 
 
 def process_video(input_path: str, output_path: str):
     """
-    Read a video frame-by-frame and write it back
-    without storing the complete video in RAM.
+    Process a video frame-by-frame using YOLO.
+
+    The video is never loaded completely into RAM.
     """
+
+    # --------------------------------------------------------
+    # Initialize video reader
+    # --------------------------------------------------------
 
     reader = VideoReader(input_path)
 
@@ -16,6 +22,16 @@ def process_video(input_path: str, output_path: str):
     print(f"Width  : {reader.width}")
     print(f"Height : {reader.height}")
 
+    # --------------------------------------------------------
+    # Initialize YOLO
+    # --------------------------------------------------------
+
+    detector = YOLODetector()
+
+    # --------------------------------------------------------
+    # Initialize video writer
+    # --------------------------------------------------------
+
     writer = VideoWriter(
         output_path=output_path,
         fps=reader.fps,
@@ -24,20 +40,40 @@ def process_video(input_path: str, output_path: str):
     )
 
     processed_frames = 0
+    total_detections = 0
 
     try:
 
+        # ----------------------------------------------------
+        # Stream frames
+        # ----------------------------------------------------
+
         for frame_index, frame in reader.frames():
 
-            # No AI processing yet.
-            # Simply write the frame.
+            # -----------------------------------------------
+            # YOLO detection
+            # -----------------------------------------------
+
+            detections = detector.detect(frame)
+
+            total_detections += len(detections)
+
+            # -----------------------------------------------
+            # Write original frame for now
+            # -----------------------------------------------
+
             writer.write(frame)
 
             processed_frames += 1
 
-            if processed_frames % 100 == 0:
+            if processed_frames % 50 == 0:
+
                 print(
-                    f"Processed {processed_frames} frames..."
+                    f"Processed "
+                    f"{processed_frames}/"
+                    f"{reader.frame_count} frames | "
+                    f"Detections so far: "
+                    f"{total_detections}"
                 )
 
     finally:
@@ -45,8 +81,16 @@ def process_video(input_path: str, output_path: str):
         reader.release()
         writer.release()
 
+    print("\nProcessing complete.")
+
     print(
-        f"\nFinished processing {processed_frames} frames."
+        f"Total frames processed: "
+        f"{processed_frames}"
+    )
+
+    print(
+        f"Total detections: "
+        f"{total_detections}"
     )
 
 
@@ -57,7 +101,7 @@ if __name__ == "__main__":
     )
 
     output_video = (
-        "outputs/videos/test_stream.mp4"
+        "outputs/videos/yolo_test.mp4"
     )
 
     process_video(
