@@ -40,3 +40,15 @@ uploads/*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated FootballIQ CSV results
+outputs/csv/*.csv
+
+# Debug artifacts
+outputs/ball_detection_debug/
+outputs/debug_track39_crops/
+outputs/debug_track39_transition/
+debug_player*.jpg
+integration_log.txt
+tracking_debug*.txt
+tracking_test_log.txt

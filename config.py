@@ -53,6 +53,14 @@ REFEREE_CLASS = "referee"
 
 BALL_CLASS = "ball"
 
+# Team / Jersey Classification
+TEAM_COLOR_MIN_CONFIDENCE = 0.55
+TEAM_HISTORY_LENGTH = 10
+
+TEAM_A_NAME = "Team A"
+TEAM_B_NAME = "Team B"
+REFEREE_NAME = "Referee"
+
 # ============================================================
 # Video Configuration
 # ============================================================

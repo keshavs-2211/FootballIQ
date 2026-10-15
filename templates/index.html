@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FootballIQ | Match Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="/">
+            <span class="brand-icon">F</span>
+            <span>Football<span class="accent">IQ</span></span>
+        </a>
+        <span class="header-status"><span class="status-dot"></span> LOCAL ANALYSIS</span>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">COMPUTER VISION · MATCH INTELLIGENCE</p>
+            <h1>Understand the game<span class="accent">.</span></h1>
+            <p class="hero-description">
+                Upload a football clip to detect players, track movement,
+                and generate an annotated match video.
+            </p>
+        </section>
+
+        <section class="upload-card">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">01 / INPUT</p>
+                    <h2>Upload match footage</h2>
+                </div>
+                <span class="file-limit">MAX 500 MB</span>
+            </div>
+
+            <form id="upload-form">
+                <label class="dropzone" id="dropzone" for="video-input">
+                    <span class="upload-icon">↑</span>
+                    <strong id="file-label">Drop your video here</strong>
+                    <span id="file-subtitle">or click to browse your computer</span>
+                    <span class="supported">MP4 · AVI · MOV · MKV</span>
+                </label>
+                <input type="file" id="video-input" name="video"
+                       accept=".mp4,.avi,.mov,.mkv,video/*" hidden>
+                <button class="primary-button" type="submit" id="submit-button">
+                    <span>Start match analysis</span><span>→</span>
+                </button>
+            </form>
+            <p class="privacy-note">Your footage is processed locally by this application.</p>
+        </section>
+
+        <section class="results-section" id="results-section" hidden>
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">02 / ANALYSIS</p>
+                    <h2 id="result-title">Processing your match</h2>
+                </div>
+                <span class="job-badge" id="job-status">QUEUED</span>
+            </div>
+
+            <div class="progress-panel" id="progress-panel">
+                <div class="spinner" id="spinner"></div>
+                <div>
+                    <strong id="status-message">Preparing video...</strong>
+                    <p id="status-detail">This can take a while on longer clips.</p>
+                </div>
+            </div>
+
+            <div id="error-message" class="error-message" hidden></div>
+
+            <div id="completed-content" hidden>
+                <div class="video-panel">
+                    <div class="panel-heading">
+                        <h3>Annotated match footage</h3>
+                        <span class="live-tag">PROCESSED VIDEO</span>
+                    </div>
+                    <video id="output-video" controls playsinline></video>
+                </div>
+
+                <div class="stats-grid">
+                    <article class="stat-card">
+                        <span>Frames processed</span>
+                        <strong id="frames-stat">—</strong>
+                    </article>
+                    <article class="stat-card">
+                        <span>Total detections</span>
+                        <strong id="detections-stat">—</strong>
+                    </article>
+                    <article class="stat-card">
+                        <span>Tracked object detections</span>
+                        <strong id="tracked-stat">—</strong>
+                    </article>
+                    <article class="stat-card">
+                        <span>Frames with ball detected</span>
+                        <strong id="ball-stat">—</strong>
+                    </article>
+                </div>
+                <p class="disclaimer">
+                    Detection counts represent model outputs, not unique players.
+                    Ball detection may be intermittent.
+                </p>
+            </div>
+        </section>
+
+        <footer>
+            <span>FootballIQ</span>
+            <span>YOLO · ByteTrack · OpenCV</span>
+        </footer>
+    </main>
+</body>
+</html>

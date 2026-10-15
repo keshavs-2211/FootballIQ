@@ -22,7 +22,7 @@ class ByteTrackTracker:
         self,
         track_activation_threshold=0.25,
         lost_track_buffer=30,
-        minimum_matching_threshold=0.8,
+        minimum_matching_threshold=0.3,
         frame_rate=25,
     ):
         self.tracker = SupervisionByteTrack(
@@ -85,7 +85,7 @@ class ByteTrackTracker:
         for i in range(len(tracked.xyxy)):
             track_id = tracked.tracker_id[i]
 
-            if track_id is None:
+            if track_id is None or int(track_id)<0:
                 continue
 
             class_id_value = int(tracked.class_id[i])
