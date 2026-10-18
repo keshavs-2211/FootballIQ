@@ -4,6 +4,7 @@ from collections import Counter, defaultdict, deque
 from pathlib import Path
 import csv
 import cv2
+import pandas as pd
 
 from config import (
     BALL_CLASS,
@@ -32,6 +33,10 @@ def process_video(input_path: str, output_path: str):
     csv_path = Path(CSV_OUTPUT_DIR) / (
         f"{output_path.stem}_coordinates.csv"
     )
+    parquet_path = Path(CSV_OUTPUT_DIR) / (
+        f"{output_path.stem}_coordinates.parquet"
+    )
+
     csv_path.parent.mkdir(parents=True, exist_ok=True)
 
     reader = VideoReader(input_path)
@@ -80,6 +85,9 @@ def process_video(input_path: str, output_path: str):
         "jersey_color",
         "team",
     ]
+
+    # Store the same rows written to CSV for Parquet export.
+    coordinate_rows = []
 
     try:
         detector = YOLODetector()
@@ -228,7 +236,7 @@ def process_video(input_path: str, output_path: str):
                         obj["team"] = "Unknown"
                         obj["jersey_color"] = "Unknown"
 
-                    csv_writer.writerow({
+                    coordinate_row = {
                         "frame": frame_index,
                         "timestamp_seconds": round(
                             frame_index / fps,
@@ -256,7 +264,10 @@ def process_video(input_path: str, output_path: str):
                         ),
                         "jersey_color": jersey_color,
                         "team": team,
-                    })
+                    }
+
+                    csv_writer.writerow(coordinate_row)
+                    coordinate_rows.append(coordinate_row)
 
                 if ball_detection is not None:
                     ball_count += 1
@@ -285,6 +296,20 @@ def process_video(input_path: str, output_path: str):
         if writer is not None:
             writer.release()
 
+    # Export Parquet only after processing finishes.
+    # The existing CSV export remains available for compatibility.
+    coordinate_df = pd.DataFrame(
+        coordinate_rows,
+        columns=fieldnames,
+    )
+    coordinate_df.to_parquet(
+        parquet_path,
+        engine="pyarrow",
+        index=False,
+    )
+
+    print(f"Parquet coordinates saved to: {parquet_path}")
+
     summary = {
         "frames_processed": processed_frames,
         "total_detections": total_detections,
@@ -295,6 +320,7 @@ def process_video(input_path: str, output_path: str):
         "team_color_mapping": team_calibrator.get_mapping(),
         "output_path": str(output_path),
         "coordinates_csv": str(csv_path),
+        "coordinates_parquet": str(parquet_path),
     }
 
     print("\nProcessing complete.")

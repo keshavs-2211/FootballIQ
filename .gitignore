@@ -52,3 +52,17 @@ debug_player*.jpg
 integration_log.txt
 tracking_debug*.txt
 tracking_test_log.txt
+
+# Local backups
+*.backup
+*.before_*
+*_backup.py
+
+# Local debug archives
+*.zip
+
+# Generated Parquet files
+outputs/csv/*.parquet
+
+# Generated field diagnostics
+outputs/field_diagnostics/
