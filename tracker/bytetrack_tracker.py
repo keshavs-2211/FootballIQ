@@ -1,21 +1,19 @@
+
 import numpy as np
 import supervision as sv
+
 from trackers import ByteTrackTracker as SupervisionByteTrack
 
 
 class ByteTrackTracker:
     """
-    ByteTrack-based multi-object tracker.
+    Standard ByteTrack wrapper for FootballIQ.
 
-    Responsible only for assigning persistent track IDs
-    to YOLO detections.
+    Uses ByteTrack's built-in Kalman filtering
+    and association for player tracking.
 
-    It does not perform:
-    - YOLO detection
-    - team classification
-    - ball tracking
-    - possession
-    - analytics
+    No additional predicted-position recovery
+    or manual ID reassignment.
     """
 
     def __init__(
@@ -25,6 +23,7 @@ class ByteTrackTracker:
         minimum_matching_threshold=0.3,
         frame_rate=25,
     ):
+
         self.tracker = SupervisionByteTrack(
             track_activation_threshold=track_activation_threshold,
             lost_track_buffer=lost_track_buffer,
@@ -34,18 +33,13 @@ class ByteTrackTracker:
 
     def update(self, detections):
         """
-        Update ByteTrack using YOLO detections.
-
-        Input:
-            detections: list of YOLO detection dictionaries
-
-        Output:
-            list of dictionaries containing:
-            bbox, class_id, class_name, confidence, track_id
+        Update ByteTrack and return tracked objects.
         """
 
         if not detections:
-            self.tracker.update(sv.Detections.empty())
+            self.tracker.update(
+                sv.Detections.empty()
+            )
             return []
 
         xyxy = np.array(
@@ -63,7 +57,6 @@ class ByteTrackTracker:
             dtype=np.int32,
         )
 
-        # Keep the original class name attached to each detection.
         class_names = np.array(
             [d["class_name"] for d in detections],
             dtype=object,
@@ -75,34 +68,47 @@ class ByteTrackTracker:
             class_id=class_id,
         )
 
-        # Store class names as custom detection data.
-        supervision_detections.data["class_name"] = class_names
+        supervision_detections.data[
+            "class_name"
+        ] = class_names
 
-        tracked = self.tracker.update(supervision_detections)
+        tracked = self.tracker.update(
+            supervision_detections
+        )
 
-        tracked_detections = []
+        tracked_objects = []
 
         for i in range(len(tracked.xyxy)):
+
             track_id = tracked.tracker_id[i]
 
-            if track_id is None or int(track_id)<0:
+            if (
+                track_id is None
+                or int(track_id) < 0
+            ):
                 continue
 
-            class_id_value = int(tracked.class_id[i])
+            class_id_value = int(
+                tracked.class_id[i]
+            )
 
             if "class_name" in tracked.data:
-                class_name = tracked.data["class_name"][i]
+                class_name = str(
+                    tracked.data["class_name"][i]
+                )
             else:
-                class_name = str(class_id_value)
+                class_name = str(
+                    class_id_value
+                )
 
-            tracked_detection = {
+            tracked_objects.append({
                 "bbox": tracked.xyxy[i].tolist(),
                 "class_id": class_id_value,
-                "class_name": str(class_name),
-                "confidence": float(tracked.confidence[i]),
+                "class_name": class_name,
+                "confidence": float(
+                    tracked.confidence[i]
+                ),
                 "track_id": int(track_id),
-            }
+            })
 
-            tracked_detections.append(tracked_detection)
-
-        return tracked_detections
+        return tracked_objects

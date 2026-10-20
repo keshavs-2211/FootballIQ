@@ -6,3 +6,4 @@ pandas>=2.2.0
 matplotlib>=3.9.0
 flask>=3.0.0
 scipy>=1.13.0
+trackers==2.6.1

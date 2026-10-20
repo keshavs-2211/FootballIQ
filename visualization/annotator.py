@@ -2,86 +2,127 @@
 import cv2
 
 
-# OpenCV uses BGR, not RGB.
-JERSEY_COLORS = {
-    "White": (235, 235, 235),
-    "Green": (50, 210, 70),
-    "Red": (50, 50, 235),
-    "Yellow": (30, 220, 255),
-    "Blue": (235, 130, 40),
-    "Purple": (200, 70, 190),
-    "Unknown": (60, 220, 60),
-}
-
-ROLE_COLORS = {
-    "goalkeeper": (255, 180, 40),
-    "referee": (40, 200, 255),
-    "ball": (0, 140, 255),
+TEAM_BOX_COLORS = {
+    "Team A": (255, 180, 40),
+    "Team B": (60, 70, 245),
+    "Unknown": (165, 165, 165),
 }
 
 
 def annotate_frame(frame, detections, ball_state=None):
-    """Draw tracked objects with jersey colors and team assignments."""
+    """
+    FootballIQ tracking visualization.
+
+    Confirmed players:
+        Team-coloured bounding boxes.
+
+    Unclassified players:
+        Grey bounding boxes with tracking IDs.
+
+    Referees:
+        Not drawn.
+
+    Ball:
+        Existing visualization retained.
+    """
+
     annotated = frame.copy()
 
-    for detection in detections:
-        x1, y1, x2, y2 = map(int, detection["bbox"])
-        class_name = detection.get("class_name", "object").lower()
-        track_id = detection.get("track_id")
-        jersey_color = detection.get("jersey_color", "Unknown")
-        team = detection.get("team", "Unknown")
+    for obj in detections:
 
-        if class_name == "player":
-            color = JERSEY_COLORS.get(
-                jersey_color,
-                JERSEY_COLORS["Unknown"],
+        class_name = str(
+            obj.get("class_name", "")
+        ).lower()
+
+        if class_name not in ("player", "goalkeeper"):
+            continue
+
+        team = obj.get("team", "Unknown")
+        track_id = obj.get("track_id", "?")
+
+        color = TEAM_BOX_COLORS.get(
+            team,
+            TEAM_BOX_COLORS["Unknown"],
+        )
+
+        x1, y1, x2, y2 = map(
+            int,
+            obj["bbox"],
+        )
+
+        if team == "Unknown":
+
+            color = TEAM_BOX_COLORS["Unknown"]
+
+            label = (
+                f"ID #{track_id} | Unknown"
             )
 
-            if team != "Unknown":
-                label = (
-                    f"Player #{track_id} | {team} ({jersey_color})"
-                )
-            else:
-                label = f"Player #{track_id} | {jersey_color}"
-
-        elif class_name in ROLE_COLORS:
-            color = ROLE_COLORS[class_name]
-            label = f"{class_name.title()} #{track_id}"
+            # Thinner grey box for uncertain tracks.
+            thickness = 1
 
         else:
-            color = (200, 200, 200)
-            label = f"{class_name.title()} #{track_id}"
+
+            role = (
+                "GK"
+                if class_name == "goalkeeper"
+                else "Player"
+            )
+
+            label = (
+                f"{role} #{track_id} | {team}"
+            )
+
+            thickness = 2
 
         cv2.rectangle(
             annotated,
             (x1, y1),
             (x2, y2),
             color,
-            2,
+            thickness,
         )
-
-        text_y = max(22, y1 - 8)
 
         cv2.putText(
             annotated,
             label,
-            (x1, text_y),
+            (x1, max(20, y1 - 7)),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.55,
+            0.50,
             color,
             2,
             cv2.LINE_AA,
         )
 
-    # Preserve the existing ball visualization.
-    if ball_state:
-        status = ball_state.get("status", "unavailable")
-        ball_x = ball_state.get("ball_x")
-        ball_y = ball_state.get("ball_y")
+    # ======================================
+    # BALL DISPLAY
+    # ======================================
 
-        if ball_x is not None and ball_y is not None:
-            center = (int(ball_x), int(ball_y))
-            cv2.circle(annotated, center, 7, (0, 0, 255), -1)
+    if ball_state:
+
+        status = ball_state.get(
+            "status",
+            "unavailable",
+        )
+
+        bx = ball_state.get("ball_x")
+        by = ball_state.get("ball_y")
+
+        if bx is not None and by is not None:
+
+            center = (
+                int(bx),
+                int(by),
+            )
+
+            cv2.circle(
+                annotated,
+                center,
+                7,
+                (0, 0, 255),
+                -1,
+            )
+
             cv2.circle(
                 annotated,
                 center,

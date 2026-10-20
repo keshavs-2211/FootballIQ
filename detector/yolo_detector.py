@@ -1,8 +1,12 @@
+
 from ultralytics import YOLO
 
 from config import (
     MODEL_PATH,
     DEFAULT_CONFIDENCE,
+    DEFAULT_IOU,
+    DEFAULT_IMAGE_SIZE,
+    DEFAULT_MAX_DETECTIONS,
     PLAYER_CLASSES,
     REFEREE_CLASS,
     BALL_CLASS,
@@ -11,54 +15,90 @@ from config import (
 
 class YOLODetector:
     """
-    YOLO-based object detector.
+    FootballIQ YOLO object detector.
 
-    Responsible only for object detection.
-    It does not perform tracking or analytics.
+    Uses the project's trained football model.
+    Tracking and team assignment are handled
+    by other modules.
     """
 
     def __init__(
         self,
         model_path=MODEL_PATH,
         confidence=DEFAULT_CONFIDENCE,
+        iou=DEFAULT_IOU,
+        image_size=DEFAULT_IMAGE_SIZE,
     ):
         self.model_path = model_path
         self.confidence = confidence
+        self.iou = iou
+        self.image_size = image_size
 
         print(f"Loading YOLO model: {model_path}")
 
         self.model = YOLO(str(model_path))
 
         print("YOLO model loaded successfully.")
+        print(f"Confidence: {confidence}")
+        print(f"IoU: {iou}")
+        print(f"Image size: {image_size}")
 
     def detect(self, frame):
         """
-        Detect objects in a single frame.
-
-        Returns:
-            list[dict]: Standard FootballIQ detection format.
+        Return detections in the existing
+        FootballIQ dictionary format.
         """
+
+        if frame is None or frame.size == 0:
+            return []
 
         results = self.model.predict(
             source=frame,
             conf=self.confidence,
+            iou=self.iou,
+            imgsz=self.image_size,
+            max_det=DEFAULT_MAX_DETECTIONS,
+            device="cpu",
             verbose=False,
         )
 
-        result = results[0]
+        if not results:
+            return []
 
+        result = results[0]
         detections = []
 
-        for box in result.boxes:
+        if result.boxes is None:
+            return detections
 
-            class_id = int(box.cls[0])
-            confidence = float(box.conf[0])
+        # Convert the small results table in one
+        # operation instead of repeated GPU/CPU
+        # conversions for individual boxes.
+        boxes = result.boxes.cpu()
 
-            class_name = result.names[class_id]
+        for box in boxes:
+            class_id = int(box.cls.item())
+            confidence = float(box.conf.item())
 
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            class_name = str(
+                result.names[class_id]
+            ).strip().lower()
 
-            detection = {
+            # Only football-related objects
+            # are needed downstream.
+            if class_name not in (
+                "player",
+                "goalkeeper",
+                "referee",
+                "ball",
+            ):
+                continue
+
+            x1, y1, x2, y2 = (
+                box.xyxy[0].tolist()
+            )
+
+            detections.append({
                 "bbox": [
                     float(x1),
                     float(y1),
@@ -68,56 +108,40 @@ class YOLODetector:
                 "class_id": class_id,
                 "class_name": class_name,
                 "confidence": confidence,
-            }
-
-            detections.append(detection)
+            })
 
         return detections
 
-
     def get_players(self, detections):
-        """
-        Return player and goalkeeper detections.
-        """
-
         return [
             detection
             for detection in detections
-            if detection["class_name"] in PLAYER_CLASSES
+            if detection["class_name"]
+            in PLAYER_CLASSES
         ]
 
     def get_referees(self, detections):
-        """
-        Return referee detections.
-        """
-
         return [
             detection
             for detection in detections
-            if detection["class_name"] == REFEREE_CLASS
+            if detection["class_name"]
+            == REFEREE_CLASS
         ]
 
     def get_ball(self, detections):
-        """
-        Return ball detections.
-
-        Returns:
-            dict or None
-        """
-
         balls = [
             detection
             for detection in detections
-            if detection["class_name"] == BALL_CLASS
+            if detection["class_name"]
+            == BALL_CLASS
         ]
 
         if not balls:
             return None
 
-        # Highest-confidence ball detection
         return max(
             balls,
-            key=lambda detection: detection["confidence"],
+            key=lambda detection: (
+                detection["confidence"]
+            ),
         )
-
-        
