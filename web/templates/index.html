@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0d11" />
+  <title>FootballIQ — Match Intelligence Studio</title>
+  <link rel="stylesheet" href="/fi-assets/styles.css?v=4" />
+  <script defer src="/fi-assets/app.js?v=4"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-row">
+        <div class="brand-logo"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M5 31L15 7L23 25L29 13L35 31" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="9" r="3" fill="currentColor"/></svg></div>
+        <div><div class="brand-name">FOOTBALL<span>IQ</span></div><div class="brand-caption">MATCH ANALYSIS</div></div>
+      </div>
+      <div class="side-section-label">WORKSPACE</div>
+      <nav class="nav-list" aria-label="Main navigation">
+        <button class="nav-link active" data-nav="overview"><span class="nav-icon">◫</span> Overview <span class="nav-chevron">›</span></button>
+        <button class="nav-link" data-nav="setup"><span class="nav-icon">▣</span> Match studio</button>
+        <button class="nav-link" data-nav="analytics"><span class="nav-icon">▥</span> Analytics</button>
+        <button class="nav-link" data-nav="library"><span class="nav-icon">▤</span> Match library</button>
+      </nav>
+      <div class="side-section-label recent-title">RECENT MATCHES</div>
+      <div id="sidebar-projects" class="side-projects"><div class="side-empty">Your uploaded matches appear here.</div></div>
+      <div class="sidebar-bottom">
+        <div class="mini-pitch"><div class="mini-pitch-line"></div><div class="mini-pitch-center"></div><span class="mini-ball"></span></div>
+        <div class="side-bottom-copy"><strong>FootballIQ</strong><span>Local analysis workspace</span></div>
+        <div class="side-footer">FOOTBALLIQ / V3.0 <span class="tiny-dot"></span> LOCAL STUDIO</div>
+      </div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar">
+        <div class="crumb"><span class="crumb-muted">WORKSPACE</span><span class="slash">/</span><span id="current-page-label">Overview</span></div>
+        <div class="top-actions"><span class="local-status"><span class="online-dot"></span> Local workspace</span><button id="theme-toggle" class="icon-button" title="Switch appearance" aria-label="Toggle light and dark mode"><span id="theme-icon">☼</span></button><div class="avatar" title="Your workspace">FI</div></div>
+      </header>
+
+      <main id="main-content">
+        <section id="view-overview" class="view active">
+          <div class="hero">
+            <div class="hero-copy"><div class="eyebrow"><span class="eyebrow-line"></span> MATCH ANALYSIS</div>
+              <h1>Football match<br/><em>analysis.</em></h1>
+              <p>Upload match footage to review tracked players, pitch positions and movement statistics.</p>
+              <div class="hero-actions"><button class="btn btn-primary" data-open-upload>Analyze a match <span>↗</span></button><button class="btn btn-quiet" data-go="library">View your matches <span>→</span></button></div>
+              <div class="hero-mini-metrics"><div><strong id="hero-count">00</strong><span>Matches added</span></div><div class="vertical-line"></div><div><strong>05</strong><span>Core insights</span></div><div class="vertical-line"></div><div><strong>2D</strong><span>Tactical mapping</span></div></div>
+            </div>
+            <div class="hero-art" aria-hidden="true"><div class="hero-art-glow"></div><div class="pitch perspective"><div class="pitch-border"><span class="halfline"></span><span class="centercircle"></span><span class="leftbox"></span><span class="rightbox"></span><span class="leftgoal"></span><span class="rightgoal"></span></div><span class="p-dot da p1"></span><span class="p-dot da p2"></span><span class="p-dot da p3"></span><span class="p-dot da p4"></span><span class="p-dot da p5"></span><span class="p-dot db p6"></span><span class="p-dot db p7"></span><span class="p-dot db p8"></span><span class="p-dot db p9"></span><span class="p-dot db p10"></span><span class="pitch-ball"></span><span class="motion-trail"></span></div><div class="hero-floating"><span class="pulse-circle"></span> LIVE MOTION MODEL <span>↗</span></div></div>
+          </div>
+          <div class="section-title-row"><div><div class="eyebrow muted">YOUR TOOLKIT</div><h2>One platform. The whole picture.</h2></div><div class="tiny-label">BUILT FOR ANALYSIS <span>✦</span></div></div>
+          <div class="feature-grid">
+            <article class="feature-card"><div class="feature-icon">◉</div><h3>Player tracking</h3><p>Identify movements across the pitch and follow individual track IDs.</p><span class="feature-index">01 / DETECTION</span></article>
+            <article class="feature-card"><div class="feature-icon">◌</div><h3>Heatmap intelligence</h3><p>Find where players operate, concentrate, and influence the game.</p><span class="feature-index">02 / POSITIONING</span></article>
+            <article class="feature-card"><div class="feature-icon">↗</div><h3>Distance covered</h3><p>Estimate visible movement using calibrated pitch coordinates.</p><span class="feature-index">03 / MOVEMENT</span></article>
+            <article class="feature-card"><div class="feature-icon">⌗</div><h3>Team shape</h3><p>Understand average positions and spatial team structure.</p><span class="feature-index">04 / TACTICS</span></article>
+          </div>
+          <div class="section-title-row recent-header"><div><div class="eyebrow muted">PICK UP WHERE YOU LEFT OFF</div><h2>Recent analyses</h2></div><button class="text-link" data-go="library">All matches →</button></div>
+          <div id="overview-projects" class="project-cards"></div>
+          <div class="section-title-row"><div><div class="eyebrow muted">YOUR LATEST FINISHED MATCH</div><h2>Replay studio</h2></div><button class="text-link" data-go="analytics">Full analytics →</button></div>
+          <div id="overview-video-spotlight" class="overview-video-spotlight"><div class="empty-block">Complete or import an analysis to view annotated footage, bird's-eye view and side-by-side replay here.</div></div>
+        </section>
+
+        <section id="view-setup" class="view">
+          <div class="page-heading"><div><div class="eyebrow muted">NEW ANALYSIS</div><h1>Match studio<span class="period">.</span></h1><p>A guided setup, built around the way FootballIQ actually processes videos.</p></div><div class="heading-chip"><span class="chip-dot"></span> 3-STEP WORKFLOW</div></div>
+          <div class="steps"><div class="step active" id="step-dot-1"><span>01</span><div><strong>Upload</strong><small>Add match footage</small></div></div><div class="step-divider"></div><div class="step" id="step-dot-2"><span>02</span><div><strong>Configure</strong><small>Jerseys & pitch</small></div></div><div class="step-divider"></div><div class="step" id="step-dot-3"><span>03</span><div><strong>Analyze</strong><small>Process & explore</small></div></div></div>
+
+          <div id="setup-upload" class="setup-part">
+            <div class="panel"><div class="panel-heading"><div><span class="tiny-label">STEP 01 / 03</span><h2>Upload your footage</h2><p>Start with a clear, elevated view of the pitch. Short clips are best for first tests.</p></div><span class="panel-mark">↗</span></div>
+              <div class="form-grid"><label>Match name <input id="match-name" type="text" placeholder="e.g. Blue vs Red — Friendly" maxlength="70" /></label><label>Team A name<input id="team-a-name" type="text" value="Blue" maxlength="35" /></label><label>Team B name<input id="team-b-name" type="text" value="Red" maxlength="35" /></label></div>
+              <div id="upload-zone" class="upload-zone" role="button" tabindex="0" aria-label="Choose match video"><div class="upload-icon">↑</div><strong>Drop your match video here</strong><p>or <u>browse files</u> to select a video</p><span>MP4 ONLY · UP TO 1 GB · 16:9 RECOMMENDED</span><input id="video-file" type="file" accept="video/mp4,.mp4" hidden /></div>
+              <div id="selected-file" class="selected-file hidden"></div>
+              <div class="existing-match-import"><div><strong>Already analyzed Blue vs Red or another match?</strong><p>Import its existing video and output files without running YOLO again. These files must already exist under your FootballIQ project folders.</p></div><div class="import-controls"><select id="local-match-select" aria-label="Existing match"><option value="">Search for existing inputs…</option></select><button id="import-existing" type="button" class="btn btn-secondary">Open existing results →</button></div></div>
+              <div class="panel-footer"><span>◈ Your footage stays on your computer.</span><button id="upload-submit" class="btn btn-primary">Continue to setup <span>→</span></button></div>
+            </div>
+          </div>
+
+          <div id="setup-config" class="setup-part hidden">
+            <div class="panel">
+              <div class="panel-heading"><div><span class="tiny-label">STEP 02 / 03</span><h2>Set up the teams</h2><p>Pause on a visible player, then draw a tight rectangle around just the jersey fabric. Avoid skin, grass, and shorts.</p></div><span id="setup-match-tag" class="pill">MATCH</span></div>
+              <div class="config-grid">
+                <div>
+                  <div class="video-tool-bar"><label>Reference video timestamp <input id="frame-time" type="range" min="0" max="10" step="0.1" value="0" /></label><span id="frame-time-value" class="timecode">00:00.0</span></div>
+                  <div id="frame-holder" class="frame-holder"><img id="config-frame" alt="Choose a frame for team or ball reference" draggable="false"/><canvas id="crop-canvas" aria-label="Draw a rectangle around the selected jersey or ball"></canvas><div class="frame-hint">SELECT A JERSEY OR BALL</div></div>
+                  <div class="tool-caption"><span>Select the actual shirt fabric, or the entire visible ball.</span><span id="crop-hint">No selection</span></div>
+                  <div class="role-row"><button class="role-button selected" data-role="team_a">● Team A</button><button class="role-button" data-role="team_b">● Team B</button><button class="role-button" data-role="ball">⚽ Ball</button><button class="role-button" data-role="team_a_gk">Team A GK</button><button class="role-button" data-role="team_b_gk">
+  Team B GK
+</button>
+<button class="role-button" data-role="referee">
+  Referee
+</button></div>
+                  <div class="reference-slot-row"><label>Photo slot <select id="reference-slot"><option value="1">Photo 1 / 3</option><option value="2">Photo 2 / 3</option><option value="3">Photo 3 / 3</option></select></label><span>Use varied frames and clear, tight crops</span></div>
+                  <button id="save-reference" class="btn btn-secondary full-width">Save selected reference ↗</button>
+                  <div id="reference-active-status" class="setup-helper">Team A: 0 of 3 saved</div>
+                </div>
+                <div class="config-aside"><div class="side-panel-heading">REQUIRED REFERENCES — 18 PHOTOS</div>
+                  <div class="reference-list">
+                    <div class="reference-item" data-ref="team_a"><span class="ref-swatch" id="thumb-team_a"></span><div><strong>Team A jerseys</strong><small>3 required photos</small></div><span class="ref-status" id="status-team_a">0 / 3</span></div>
+                    <div class="reference-item" data-ref="team_b"><span class="ref-swatch" id="thumb-team_b"></span><div><strong>Team B jerseys</strong><small>3 required photos</small></div><span class="ref-status" id="status-team_b">0 / 3</span></div>
+                    <div class="reference-item" data-ref="ball"><span class="ref-swatch" id="thumb-ball"></span><div><strong>Football</strong><small>3 required photos</small></div><span class="ref-status" id="status-ball">0 / 3</span></div>
+                    <div class="reference-item" data-ref="team_a_gk"><span class="ref-swatch" id="thumb-team_a_gk"></span><div><strong>Team A goalkeeper</strong><small>3 required photos</small></div><span class="ref-status" id="status-team_a_gk">0 / 3</span></div>
+                    <div class="reference-item" data-ref="team_b_gk">
+  <span class="ref-swatch" id="thumb-team_b_gk"></span>
+  <div>
+    <strong>Team B goalkeeper</strong>
+    <small>3 required photos</small>
+  </div>
+  <span class="ref-status" id="status-team_b_gk">
+    0 / 3
+  </span>
+</div>
+
+<div class="reference-item" data-ref="referee">
+  <span class="ref-swatch" id="thumb-referee"></span>
+  <div>
+    <strong>Referee jersey</strong>
+    <small>3 required photos</small>
+  </div>
+  <span class="ref-status" id="status-referee">
+    0 / 3
+  </span>
+</div>
+                  </div>
+                  <div class="side-panel-heading" style="margin-top:22px">PHOTO PREVIEW · SELECTED ROLE</div>
+                  <div id="reference-preview" class="reference-preview"></div>
+                  <div class="config-note"><strong>Why multiple photos?</strong><p>Three photos are required for each role. Jersey references classify players, goalkeepers and referees. Ball photos verify the separate ball tracker.</p></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel calibration-panel"><div class="panel-heading"><div><span class="tiny-label">PITCH CALIBRATION</span><h2>Map the playing field</h2><p>Select a real, visible landmark from the dropdown, then click its exact position in the image. Add at least four well-spaced points.</p></div><div id="calib-badge" class="status-pill pending">Not calibrated</div></div>
+              <div class="config-grid"><div><div class="calibration-seeker"><div class="video-tool-bar"><label>Calibration frame time <input id="calib-time" type="range" min="0" max="10" step="0.0333" value="0" /></label><span id="calib-time-value" class="timecode">00:00.0</span></div><div class="frame-step-row"><button id="calib-prev" class="small-button" type="button">← Previous frame</button><label>Seconds <input id="calib-time-input" type="number" min="0" max="10" step="0.0333" value="0" /></label><button id="calib-next" class="small-button" type="button">Next frame →</button></div><p class="calib-tip">Choose one clear frame before marking landmarks. Changing the frame clears unsaved points.</p></div><div class="video-tool-bar"><label>Landmark <select id="landmark-select"></select></label><button id="undo-landmark" class="small-button">↶ Undo</button></div><div id="calib-holder" class="frame-holder"><img id="calib-frame" alt="Frame for pitch calibration" draggable="false"/><canvas id="calib-canvas" aria-label="Click pitch landmarks"></canvas><div class="frame-hint">CLICK THE SELECTED PITCH LANDMARK</div></div><div class="tool-caption"><span>Use only landmarks actually visible in this frame.</span><span id="calib-count">0 points</span></div></div><div class="config-aside"><div class="side-panel-heading">CALIBRATION CHECKLIST</div><div class="calib-help"><div class="help-step"><b>01</b><p>Find visible corners, pitch markings or the centre spot.</p></div><div class="help-step"><b>02</b><p>Choose the corresponding pitch label. Left/right refers to the tactical pitch, not necessarily screen position.</p></div><div class="help-step"><b>03</b><p>Click precisely where that line or landmark sits in the video.</p></div><div class="help-step"><b>04</b><p>Use at least 4 non-collinear points, preferably spread across the field.</p></div></div><div id="landmark-list" class="landmark-list"></div><button id="save-calibration" class="btn btn-secondary full-width">Save pitch calibration ↗</button></div></div>
+            </div>
+            <div class="panel run-panel"><div class="run-copy"><div class="eyebrow muted">READY TO GO?</div><h2>Start match analysis</h2><p>Runs detection, coordinate refinement, heatmaps, distance statistics, team shape and tactical video rendering. Ball tracking is optional and remains experimental.</p><label class="switch-line"><input type="checkbox" id="include-ball"/><span class="switch-track"></span><span>Also run experimental ball tracking & possession</span></label></div><button id="start-processing" class="btn btn-primary large-button">Start analysis <span>↗</span></button></div>
+          </div>
+
+          <div id="setup-processing" class="setup-part hidden"><div class="panel processing-panel"><div class="processing-badge"><span class="running-anim"></span> ANALYSIS IN PROGRESS</div><h2>Processing match<br/><em>footage.</em></h2><p id="processing-stage">Preparing your footage</p><div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:2%"></div></div><div class="progress-info"><span id="progress-text">2% · Processing stages</span><span>Keep this tab open to monitor progress</span></div><div class="console"><div class="console-heading"><span class="online-dot"></span> PROCESSING LOG <span class="right">● ● ●</span></div><pre id="processing-log">Preparing local pipeline…</pre></div><p class="processing-note">Long clips can take significant time on a CPU. The local server must remain running.</p></div></div>
+        </section>
+
+        <section id="view-analytics" class="view"><div class="page-heading"><div><div class="eyebrow muted">THE COMPLETE PICTURE</div><h1>Match analytics<span class="period">.</span></h1><p id="analytics-subtitle">Player tracking, movement estimates and pitch positioning.</p></div><div class="heading-chip"><span class="chip-dot"></span> TRACKING ANALYTICS</div></div><div id="analytics-content"></div></section>
+
+        <section id="view-library" class="view"><div class="page-heading"><div><div class="eyebrow muted">YOUR WORKSPACE</div><h1>Match library<span class="period">.</span></h1><p>Your uploaded footage and completed analyses, organized in one place.</p></div><button class="btn btn-primary" data-open-upload>+ New match</button></div><div id="library-projects" class="library-grid"></div></section>
+      </main>
+      <footer class="site-footer"><span>FOOTBALLIQ © 2026 · MATCH ANALYSIS</span><span>LOCAL PROCESSING / YOUR FOOTAGE, YOUR DATA</span></footer>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
