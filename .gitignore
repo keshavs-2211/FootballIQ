@@ -1,68 +1,22 @@
-# Python
 __pycache__/
 *.py[cod]
-*$py.class
-
-# Virtual environments
-venv/
 .venv/
-env/
-
-# Jupyter
+venv/
+.pytest_cache/
 .ipynb_checkpoints/
-
-# IDE
 .vscode/
 .idea/
-
-# YOLO model files
-*.pt
-
-# Video files
-*.mp4
-*.avi
-*.mov
-*.mkv
-
-# Generated outputs
-outputs/*
+models/*.pt
+models/*.onnx
+sample_data/input_videos/*
+!sample_data/input_videos/.gitkeep
+web_data/jobs/*
+!web_data/jobs/.gitkeep
+outputs/**
 !outputs/**/
-!outputs/*/.gitkeep
-
-# Uploaded files
-uploads/*
-!uploads/.gitkeep
-
-# Temporary files
-*.tmp
+!outputs/**/.gitkeep
 *.log
-
-# OS files
+*.tmp
+*_web_tmp.mp4
 .DS_Store
 Thumbs.db
-
-# Generated FootballIQ CSV results
-outputs/csv/*.csv
-
-# Debug artifacts
-outputs/ball_detection_debug/
-outputs/debug_track39_crops/
-outputs/debug_track39_transition/
-debug_player*.jpg
-integration_log.txt
-tracking_debug*.txt
-tracking_test_log.txt
-
-# Local backups
-*.backup
-*.before_*
-*_backup.py
-
-# Local debug archives
-*.zip
-
-# Generated Parquet files
-outputs/csv/*.parquet
-
-# Generated field diagnostics
-outputs/field_diagnostics/

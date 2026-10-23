@@ -1,8 +1,13 @@
-ultralytics>=8.3.0
-supervision>=0.25.0
-opencv-python>=4.10.0
-numpy>=1.26.0
-pandas>=2.2.0
-matplotlib>=3.9.0
-flask>=3.0.0
-scipy>=1.13.0
+# Recommended Python 3.11, 64-bit Windows. CPU compatible.
+ultralytics>=8.3,<9
+supervision>=0.25,<1
+opencv-python>=4.10,<5
+numpy>=1.26,<3
+pandas>=2.2,<3
+pyarrow>=17,<25
+scipy>=1.13,<2
+matplotlib>=3.9,<4
+Flask>=3.0,<4
+imageio-ffmpeg>=0.5,<1
+# The tracker's dependency; maintain compatibility with supervision/ultralytics.
+trackers==2.6.1
