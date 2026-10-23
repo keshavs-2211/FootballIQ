@@ -50,13 +50,20 @@ def analyze(data,fps,root):
         g=base[base.team==team]
         fig,ax=plt.subplots(figsize=(13,8),facecolor='#0c1725')
         setup_pitch(ax,f'{team.upper()}  /  MEAN TRACKLET POSITIONS')
-        for tid,group in g.groupby('track_id'):
+        # This is NOT a count of simultaneous players. Plot representative
+        # persistent tracklets only; short-lived ID fragments stay in diagnostics.
+        # Default setting excludes goalkeepers, so show up to 10 outfield tracks.
+        max_markers = 11 if CFG.SHAPE_INCLUDE_GOALKEEPERS else 10
+        min_samples = max(10, int(fps * .45))
+        sizes = g.groupby('track_id').size().sort_values(ascending=False)
+        lasting = sizes[sizes >= min_samples].head(max_markers).index
+        for tid,group in g[g.track_id.isin(lasting)].groupby('track_id'):
             if len(group)<CFG.MIN_POSITION_SAMPLES_FOR_LABEL: continue
             x,y=group[['pitch_x_m','pitch_y_m']].median().to_numpy()
             # Median over observed positions; not a simultaneous lineup.
             ax.scatter(x,y,s=225,color=PALETTE[team],edgecolors='white',linewidths=1.2,zorder=6,alpha=.93)
             ax.text(x,y,str(tid),color='#0c1725',fontsize=9,ha='center',va='center',weight='bold',zorder=7)
-        ax.text(.01,-.05,'Each marker is the median observed position of a TRACK ID (not a verified shirt number).',
+        ax.text(.01,-.05,'Up to 10 longest-observed outfield identities; median locations, not a simultaneous formation or shirt numbers.',
                 transform=ax.transAxes,color='#c9d8d9',fontsize=9)
         savefig(fig,root/'formations'/f'{team.lower().replace(" ","_")}_average_positions.png')
     # Tactical spread trend plotted for frames with enough simultaneous positions.

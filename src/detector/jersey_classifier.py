@@ -35,11 +35,11 @@ def _saved_references(directory):
 
 
 def select_reference_images(video_path, reference_dir="references"):
-    """Interactive crop selection. Every jersey role requires three images."""
+    """Optional team/GK photos; three referee references are mandatory."""
     directory = Path(reference_dir)
     directory.mkdir(parents=True, exist_ok=True)
     current = _saved_references(directory)
-    if all(len(current.get(name, [])) >= 3 for name in ROLE_FILES):
+    if len(current.get("Referee", [])) >= 3:
         answer = input("\nReuse existing jersey references? [Y/n]: ").strip().lower()
         if answer not in ("n", "no"):
             return current
@@ -52,12 +52,28 @@ def select_reference_images(video_path, reference_dir="references"):
     selected = {}
     print("\nReference selection: drag around the SHIRT fabric only, press Enter.")
     print("Choose different video timestamps if necessary.")
-    print("Three samples required for both teams, goalkeepers and referees.")
+    print("Optional: up to three images for either team or goalkeeper.")
+    print("Required: three referee images.")
     print(f"Clip duration: {duration:.1f} seconds")
     try:
         for name, stem in ROLE_FILES.items():
-            paths = []
+            paths = list(current.get(name, []))
+            optional = (name != "Referee")
+            if optional:
+                answer = input(f"Capture references for {name}? [y/N]: ").strip().lower()
+                if answer not in ("y", "yes"):
+                    if paths:
+                        selected[name] = paths
+                    continue
             for index in range(1, REFERENCE_COUNT_PER_ROLE + 1):
+                suffix = "" if index == 1 else f"_{index}"
+                existing = directory / f"{stem}{suffix}.png"
+                if existing.is_file():
+                    continue
+                if optional:
+                    answer = input(f"Capture {name} image {index}? [y/N]: ").strip().lower()
+                    if answer not in ("y", "yes"):
+                        continue
                 while True:
                     raw = input(f"Timestamp (seconds) for {name} image {index} [0]: ").strip()
                     try:
@@ -99,6 +115,9 @@ def select_reference_images(video_path, reference_dir="references"):
     finally:
         cap.release()
         cv2.destroyAllWindows()
+    selected = _saved_references(directory)
+    if len(selected.get("Referee", [])) < 3:
+        raise ValueError("Three referee images are required")
     return selected
 
 
@@ -125,12 +144,9 @@ class JerseyClassifier:
                 profiles.append(self._profile(image))
             if profiles:
                 self.references[label] = profiles
-        for required in ROLE_FILES:
-            if len(self.references.get(required, [])) < REFERENCE_COUNT_PER_ROLE:
-                raise ValueError(
-                    f"Expected {REFERENCE_COUNT_PER_ROLE} references "
-                    f"for {required}"
-                )
+        # Empty/partial team and goalkeeper photo sets are valid.
+        if len(self.references.get("Referee", [])) < REFERENCE_COUNT_PER_ROLE:
+            raise ValueError("Three valid referee references are required")
         print("Loaded reference images:",
               {k: len(v) for k, v in self.references.items()})
 
@@ -230,6 +246,10 @@ class JerseyClassifier:
         minimum_similarity = 0.63
         minimum_margin = 0.07
 
+        # With no competing player jersey photos, use a stricter
+        # referee threshold to reduce false exclusion of players.
+        if not any(role in scores for role in ("Team A", "Team B")):
+            return referee_score >= 0.82
         return (
             referee_score >= minimum_similarity
             and referee_score - other_score >= minimum_margin
@@ -239,6 +259,7 @@ class JerseyClassifier:
         unknown = {"team": "Unknown", "jersey_color": "Unknown",
                    "confidence": 0.0}
         scores = self._role_scores(frame, bbox)
+        scores.pop("Referee", None)
 
         if not scores:
             return unknown
@@ -247,8 +268,7 @@ class JerseyClassifier:
         best, top = ranked[0]
         runner_up = ranked[1][1] if len(ranked) > 1 else 0.0
         if (
-            best == "Referee"
-            or top < self.min_similarity
+            top < self.min_similarity
             or top - runner_up < self.min_margin
         ):
             return unknown

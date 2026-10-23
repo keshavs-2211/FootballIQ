@@ -130,3 +130,11 @@ html[data-theme=light]{color-scheme:light;--bg:#f5f6f1;--panel:#ffffff;--panel2:
     flex: 1 1 auto;
   }
 }
+
+/* FOOTBALLIQ_V4_OPTIONAL_REFERENCES */
+.role-row { display:flex; flex-wrap:wrap; gap:8px; }
+.role-button { white-space:nowrap; }
+.reference-preview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+.preview-slot img { width:100%; height:75px; object-fit:cover; }
+.visual-card img { display:block; max-height:480px; width:100%; object-fit:contain; }
+@media(max-width:650px){ .role-button{ flex:1 1 auto; } }

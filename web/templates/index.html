@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0a0d11" />
   <title>FootballIQ — Match Intelligence Studio</title>
-  <link rel="stylesheet" href="/fi-assets/styles.css?v=4" />
-  <script defer src="/fi-assets/app.js?v=4"></script>
+  <link rel="stylesheet" href="/fi-assets/styles.css?v=8" />
+  <script defer src="/fi-assets/app.js?v=8"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -93,17 +93,17 @@
                   <button id="save-reference" class="btn btn-secondary full-width">Save selected reference ↗</button>
                   <div id="reference-active-status" class="setup-helper">Team A: 0 of 3 saved</div>
                 </div>
-                <div class="config-aside"><div class="side-panel-heading">REQUIRED REFERENCES — 18 PHOTOS</div>
+                <div class="config-aside"><div class="side-panel-heading">REFERENCE PHOTOS · TEAMS & GOALKEEPERS OPTIONAL</div>
                   <div class="reference-list">
-                    <div class="reference-item" data-ref="team_a"><span class="ref-swatch" id="thumb-team_a"></span><div><strong>Team A jerseys</strong><small>3 required photos</small></div><span class="ref-status" id="status-team_a">0 / 3</span></div>
-                    <div class="reference-item" data-ref="team_b"><span class="ref-swatch" id="thumb-team_b"></span><div><strong>Team B jerseys</strong><small>3 required photos</small></div><span class="ref-status" id="status-team_b">0 / 3</span></div>
-                    <div class="reference-item" data-ref="ball"><span class="ref-swatch" id="thumb-ball"></span><div><strong>Football</strong><small>3 required photos</small></div><span class="ref-status" id="status-ball">0 / 3</span></div>
-                    <div class="reference-item" data-ref="team_a_gk"><span class="ref-swatch" id="thumb-team_a_gk"></span><div><strong>Team A goalkeeper</strong><small>3 required photos</small></div><span class="ref-status" id="status-team_a_gk">0 / 3</span></div>
+                    <div class="reference-item" data-ref="team_a"><span class="ref-swatch" id="thumb-team_a"></span><div><strong>Team A jerseys</strong><small>Optional · 0–3 photos</small></div><span class="ref-status" id="status-team_a">0 / 3</span></div>
+                    <div class="reference-item" data-ref="team_b"><span class="ref-swatch" id="thumb-team_b"></span><div><strong>Team B jerseys</strong><small>Optional · 0–3 photos</small></div><span class="ref-status" id="status-team_b">0 / 3</span></div>
+                    <div class="reference-item" data-ref="ball"><span class="ref-swatch" id="thumb-ball"></span><div><strong>Football</strong><small>3 photos when ball tracking is enabled</small></div><span class="ref-status" id="status-ball">0 / 3</span></div>
+                    <div class="reference-item" data-ref="team_a_gk"><span class="ref-swatch" id="thumb-team_a_gk"></span><div><strong>Team A goalkeeper</strong><small>Optional · 0–3 photos</small></div><span class="ref-status" id="status-team_a_gk">0 / 3</span></div>
                     <div class="reference-item" data-ref="team_b_gk">
   <span class="ref-swatch" id="thumb-team_b_gk"></span>
   <div>
     <strong>Team B goalkeeper</strong>
-    <small>3 required photos</small>
+    <small>Optional · 0–3 photos</small>
   </div>
   <span class="ref-status" id="status-team_b_gk">
     0 / 3
@@ -123,7 +123,7 @@
                   </div>
                   <div class="side-panel-heading" style="margin-top:22px">PHOTO PREVIEW · SELECTED ROLE</div>
                   <div id="reference-preview" class="reference-preview"></div>
-                  <div class="config-note"><strong>Why multiple photos?</strong><p>Three photos are required for each role. Jersey references classify players, goalkeepers and referees. Ball photos verify the separate ball tracker.</p></div>
+                  <div class="config-note"><strong>Why multiple photos?</strong><p>Recommended: capture at least one clear Team A and Team B jersey photo, ideally three varied angles each. Team and goalkeeper references are optional (up to 3 each); referee references require 3. Ball references require 3 only if ball tracking is enabled.</p></div>
                 </div>
               </div>
             </div>

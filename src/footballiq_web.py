@@ -46,33 +46,20 @@ _active_id: str | None = None
 # jersey_classifier._saved_references() reads these + _2.png + _3.png.
 REFERENCE_COUNT = 3
 
-REQUIRED_ROLES = (
-    "team_a",
-    "team_b",
-    "team_a_gk",
-    "team_b_gk",
-    "referee",
-    "ball",
-)
-
-ROLE_STEMS = {
-    role: f"{role}.png"
-    for role in REQUIRED_ROLES
-}
+# Team and goalkeeper photos improve classification but are not mandatory.
+OPTIONAL_ROLES = ("team_a", "team_b", "team_a_gk", "team_b_gk")
+REQUIRED_ROLES = ("referee",)
+BALL_ROLES = ("ball",)
+ALL_ROLES = OPTIONAL_ROLES + REQUIRED_ROLES + BALL_ROLES
+ROLE_STEMS = {role: f"{role}.png" for role in ALL_ROLES}
 
 
 def _reference_filename(role, sample=1):
     if role not in ROLE_STEMS:
         raise ValueError("Unknown reference role")
-
-    if (
-        not isinstance(sample, int)
-        or not 1 <= sample <= REFERENCE_COUNT
-    ):
+    if not isinstance(sample, int) or not 1 <= sample <= REFERENCE_COUNT:
         raise ValueError("Invalid reference sample")
-
     suffix = "" if sample == 1 else f"_{sample}"
-
     return f"{role}{suffix}.png"
 
 
@@ -610,6 +597,18 @@ def _pipeline_worker(job_id, with_ball):
     try:
         _run_script(job_id, 'Detecting players and assigning teams', 10, 'detection')
         _run_script(job_id, 'Refining pitch coordinates', 40, 'refine')
+        # Cap and de-duplicate refined player tracks BEFORE analytics/rendering.
+        clip = _read_job(job_id)['clip']
+        _update_job(job_id, stage='Finalizing player identities and active roster', progress=55)
+        command = [sys.executable, '-u', str(ROOT / 'src' / 'player_identity.py'), '--clip', clip]
+        proc = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
+                              errors='replace')
+        with (JOB_DIR / (job_id + '.log')).open('a', encoding='utf-8') as logfile:
+            logfile.write('\n=== Finalizing player identities ===\n')
+            logfile.write(proc.stdout + proc.stderr)
+        if proc.returncode:
+            raise RuntimeError('Player identity finalization failed: ' +
+                               (proc.stderr or proc.stdout)[-600:])
         _run_script(job_id, 'Generating heatmaps and analytics', 62, 'analytics')
         if with_ball:
             _run_script(job_id, 'Tracking the ball (experimental)', 76, 'ball')
@@ -639,18 +638,19 @@ def start_job(job_id):
         if _active_id is not None:
             return _safe_error('Another match is being processed. This CPU-friendly app handles one job at a time.', 409)
         existing = _overview(job)
-        if not existing['references_ready']:
-            missing = [f'{role}: {existing["reference_counts"][role]}/{REFERENCE_COUNT}'
-                       for role in REQUIRED_ROLES if existing['reference_counts'][role] != REFERENCE_COUNT]
-            return _safe_error('Save three photos for each of the six roles (18 total). Missing: ' + ', '.join(missing))
+        data = request.get_json(silent=True) or {}
+        with_ball = bool(data.get('with_ball', False))
+        needed = REQUIRED_ROLES + (BALL_ROLES if with_ball else ())
+        missing = [f'{role}: {existing["reference_counts"].get(role, 0)}/3'
+                   for role in needed if existing['reference_counts'].get(role, 0) != 3]
+        if missing:
+            return _safe_error('Missing required reference photos: ' + ', '.join(missing))
         if not existing['calibrated']:
             return _safe_error('Calibrate the pitch with at least four landmarks.')
         for script in ('process_video.py', 'refine_coordinates.py', 'run_analytics.py',
                        'render_refined_birdeye.py', 'offline_settings.py'):
             if not (ROOT / 'src' / script).is_file():
                 return _safe_error(f'Missing existing pipeline file: {script}. Follow the installation guide.')
-        data = request.get_json(silent=True) or {}
-        with_ball = bool(data.get('with_ball', False))
         if with_ball:
             for script in ('track_ball.py', 'annotate_ball.py', 'run_possession.py'):
                 if not (ROOT / 'src' / script).is_file():

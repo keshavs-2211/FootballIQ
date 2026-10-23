@@ -22,19 +22,20 @@ from detector.yolo_detector import YOLODetector
 from detector.jersey_classifier import JerseyClassifier, select_reference_images
 from tracker.bytetrack_tracker import ByteTrackTracker
 from tracker.ball_tracker import BallTracker
+from player_identity import ActivePlayerManager
 from utils.video_reader import VideoReader
 from utils.video_writer import VideoWriter
 from visualization.annotator import annotate_frame
 
 cv2.setNumThreads(2)
 CSV_COLUMNS = [
-    "frame", "timestamp_seconds", "track_id", "class_name",
+    "frame", "timestamp_seconds", "track_id", "raw_track_id", "class_name",
     "confidence", "x1", "y1", "x2", "y2", "foot_x", "foot_y",
     "normalized_x", "normalized_y", "jersey_color", "team",
 ]
 SCHEMA = pa.schema([
     ("frame", pa.int64()), ("timestamp_seconds", pa.float64()),
-    ("track_id", pa.int64()), ("class_name", pa.string()),
+    ("track_id", pa.int64()), ("raw_track_id", pa.int64()), ("class_name", pa.string()),
     ("confidence", pa.float64()),
     ("x1", pa.float64()), ("y1", pa.float64()),
     ("x2", pa.float64()), ("y2", pa.float64()),
@@ -194,26 +195,10 @@ def process_video(
         references = _saved_references(folder)
     else:
         references = reference_paths
-    required = (
-        "Team A",
-        "Team B",
-        "Team A GK",
-        "Team B GK",
-        "Referee",
-    )
-
-    missing = [
-        role
-        for role in required
-        if len(references.get(role, [])) < 3
-    ]
-
-    if missing:
-        raise ValueError(
-            "Three references required for: "
-            + ", ".join(missing)
-            + f" in references/{input_path.stem}/"
-        )
+    if len(references.get("Referee", [])) < 3:
+        raise ValueError("Three referee references required for player processing")
+    if not references.get("Team A") or not references.get("Team B"):
+        print("Team jersey references incomplete: team assignment may be Unknown")
     classifier = JerseyClassifier(
         references,
         min_similarity=SETTINGS["jersey_min_similarity"],
@@ -231,6 +216,7 @@ def process_video(
     field_filter = _field_filter(use_legacy_pitch_filter)
     votes = StableJerseyVotes()
     goalkeepers = GoalkeeperManager(references.keys())
+    active_players = ActivePlayerManager(fps=fps)
     last_classified = {}
     last_seen = {}
     stats = Counter()
@@ -260,6 +246,9 @@ def process_video(
             diag = csv.DictWriter(diag_file, fieldnames=[
                 "frame", "yolo_players", "yolo_goalkeepers", "yolo_referees",
                 "yolo_balls", "tracked", "classified", "unknown",
+                "raw_tracks", "distinct_candidates", "duplicate_tracks_removed",
+                "active_players", "cap_or_team_filtered", "reid_matches",
+                "active_team_a", "active_team_b", "active_unknown",
             ])
             coords.writeheader()
             diag.writeheader()
@@ -338,9 +327,9 @@ def process_video(
                     )
                 confirmed_gk = goalkeepers.resolve(tracked, frame_index)
 
-                draw_objects = []
-                known_in_frame = 0
-                unknown_in_frame = 0
+                # Enrich raw ByteTrack objects before applying the 22-player
+                # roster, deduplication and conservative identity continuity.
+                enriched = []
                 for obj in tracked:
                     tid = int(obj["track_id"])
                     ref = votes.label(tid)
@@ -348,26 +337,25 @@ def process_video(
                     if tid in confirmed_gk:
                         role = "goalkeeper"
                         team = confirmed_gk[tid]
-                        ref = ("Team A GK" if team == TEAM_A_NAME else "Team B GK")
+                        ref = "Team A GK" if team == TEAM_A_NAME else "Team B GK"
                     else:
-                        # Keep YOLO goalkeeper role visible, even when team unknown.
                         role = "goalkeeper" if original_role == "goalkeeper" else "player"
-                        if ref == "Team A":
-                            team = TEAM_A_NAME
-                        elif ref == "Team B":
-                            team = TEAM_B_NAME
-                        else:
-                            team = "Unknown"
-                        # GK-specific reference by itself cannot assign team before
-                        # goalkeeper confirmation; outfield jerseys may be similar.
+                        team = TEAM_A_NAME if ref == "Team A" else TEAM_B_NAME if ref == "Team B" else "Unknown"
                         if ref in ("Team A GK", "Team B GK"):
                             team = "Unknown"
                     annotated_obj = dict(obj)
-                    annotated_obj.update({
-                        "track_id": tid, "class_name": role,
-                        "team": team, "jersey_color": ref,
-                    })
-                    draw_objects.append(annotated_obj)
+                    annotated_obj.update({"class_name": role, "team": team,
+                                          "jersey_color": ref})
+                    enriched.append(annotated_obj)
+
+                draw_objects, roster_diag = active_players.select(frame_index, enriched, frame)
+                known_in_frame = 0
+                unknown_in_frame = 0
+                for obj in draw_objects:
+                    tid = int(obj["track_id"])  # Stable FootballIQ identity
+                    team = obj["team"]
+                    ref = obj["jersey_color"]
+                    role = obj["class_name"]
                     if team == "Unknown":
                         unknown_in_frame += 1
                         stats["unknown"] += 1
@@ -381,12 +369,11 @@ def process_video(
                     row = {
                         "frame": frame_index,
                         "timestamp_seconds": round(frame_index/fps, 3),
-                        "track_id": tid, "class_name": role,
+                        "track_id": tid, "raw_track_id": int(obj["raw_track_id"]), "class_name": role,
                         "confidence": round(float(obj["confidence"]), 4),
                         "x1": round(x1, 2), "y1": round(y1, 2),
                         "x2": round(x2, 2), "y2": round(y2, 2),
-                        "foot_x": round(foot_x, 2),
-                        "foot_y": round(foot_y, 2),
+                        "foot_x": round(foot_x, 2), "foot_y": round(foot_y, 2),
                         "normalized_x": round(foot_x/max(w, 1), 6),
                         "normalized_y": round(foot_y/max(h, 1), 6),
                         "jersey_color": ref, "team": team,
@@ -406,6 +393,7 @@ def process_video(
                     "tracked": len(tracked),
                     "classified": known_in_frame,
                     "unknown": unknown_in_frame,
+                    **roster_diag,
                 })
 
                 display = frame.copy()

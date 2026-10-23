@@ -40,7 +40,7 @@ MIN_REFERENCE_SIMILARITY = 0.39
 # 65% appearance similarity, 35% YOLO confidence.
 REFERENCE_WEIGHT = 0.65
 
-MIN_YOLO_CONFIDENCE = 0.13
+MIN_YOLO_CONFIDENCE = 0.09
 MIN_CROP_PIXELS = 4
 BALL_PATCH_SIZE = 40
 
@@ -302,25 +302,21 @@ def permitted(point):
     ):
         return False
 
-    # Suppress detections at either penalty mark.
-    # This also excludes a real ball in the same area.
-    radius = max(
-        0.0,
-        float(
-            setting(
-                "BALL_PENALTY_EXCLUSION_METRES",
-                2.0
-            )
-        )
-    )
+    # Reject all ball positions near calibrated pitch spots.
+    # Applies to YOLO, optical flow and predicted ball states.
+    radius = max(0.0, float(setting(
+        "BALL_SPOT_EXCLUSION_METRES",
+        setting("BALL_PENALTY_EXCLUSION_METRES", 2.0)
+    )))
 
     if radius > 0:
-        penalty_spots = (
-            (11.0, 34.0),
-            (94.0, 34.0),
+        spots = (
+            (11.0, 34.0),     # Left penalty spot
+            (52.5, 34.0),     # Centre spot
+            (94.0, 34.0),     # Right penalty spot
         )
 
-        for sx, sy in penalty_spots:
+        for sx, sy in spots:
             distance = np.hypot(
                 point[0] - sx,
                 point[1] - sy

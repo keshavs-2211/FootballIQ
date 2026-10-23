@@ -37,13 +37,16 @@ AUTO_APPROVE_ID_MERGES = False  # Leave False until visually checked
 
 # Ball detection runs as a SEPARATE pass and only periodically.
 BALL_YOLO_EVERY = 2
-BALL_YOLO_CONF = 0.13
+BALL_YOLO_CONF = 0.09
 BALL_YOLO_IMAGE_SIZE = 768  # Optional, depends on detector support
 BALL_MAX_PREDICTION_GAP = 11  # frames
 BALL_CONFIRM_HITS = 2
 BALL_CONFIRM_WINDOW = 7
 BALL_MAX_SPEED_MPS = 42.0
 BALL_PENALTY_EXCLUSION_METRES = 2.0  # Omits real penalties as well
+# Exclude ball detection at all three pitch spots.
+# Real balls in these areas are also excluded.
+BALL_SPOT_EXCLUSION_METRES = 2.0
 BALL_LK_MAX_PIXEL_STEP = 55.0
 BALL_TEMPLATE_MATCH = True
 BALL_TEMPLATE_THRESHOLD = 0.78

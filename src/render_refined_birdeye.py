@@ -106,6 +106,27 @@ class PitchPainter:
             cv2.circle(out, (px + 2, py + 3), radius + 2, (28, 80, 27), -1, cv2.LINE_AA)
             cv2.circle(out, (px, py), radius, color, -1, cv2.LINE_AA)
             cv2.circle(out, (px, py), radius, (20, 20, 20), 1, cv2.LINE_AA)
+            # FOOTBALLIQ_PLAYER_ID_LABEL_V1
+            # Use stable FootballIQ track IDs (not jersey numbers).
+            raw_id = item.get("track_id")
+            try:
+                player_id = str(int(float(raw_id)))
+            except (TypeError, ValueError, OverflowError):
+                player_id = "?" if raw_id is None else str(raw_id)
+            # A larger label for goalkeepers, without replacing their ID with GK.
+            scale = 0.42 if len(player_id) <= 2 else (0.34 if len(player_id) <= 3 else 0.28)
+            thickness = 1
+            (text_width, text_height), _ = cv2.getTextSize(
+                player_id, cv2.FONT_HERSHEY_SIMPLEX, scale, thickness
+            )
+            luminance = 0.114 * color[0] + 0.587 * color[1] + 0.299 * color[2]
+            text_color = (18, 18, 18) if luminance >= 145 else (255, 255, 255)
+            cv2.putText(
+                out, player_id,
+                (px - text_width // 2, py + text_height // 2),
+                cv2.FONT_HERSHEY_SIMPLEX, scale, text_color,
+                thickness, cv2.LINE_AA
+            )
             if S.DRAW_ESTIMATE_OUTLINES and str(item.get("position_source", "")).startswith(("interpolated", "held", "rejected")):
                 cv2.circle(out, (px, py), radius + 4, (210, 210, 210), 1, cv2.LINE_AA)
             
@@ -116,8 +137,12 @@ class PitchPainter:
                 float(
                     getattr(
                         S,
-                        "BALL_PENALTY_EXCLUSION_METRES",
-                        2.0
+                        "BALL_SPOT_EXCLUSION_METRES",
+                        getattr(
+                            S,
+                            "BALL_PENALTY_EXCLUSION_METRES",
+                            2.0
+                        )
                     )
                 )
             )
@@ -128,6 +153,7 @@ class PitchPainter:
                     np.hypot(x - sx, y - sy) <= radius
                     for sx, sy in (
                         (11.0, 34.0),
+                        (52.5, 34.0),
                         (94.0, 34.0),
                     )
                 )

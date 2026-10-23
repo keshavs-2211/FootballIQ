@@ -11,14 +11,8 @@
     referee: 'Referee',
     ball: 'Ball'
   };
-  const requiredRoles = [
-    'team_a',
-    'team_b',
-    'team_a_gk',
-    'team_b_gk',
-    'referee',
-    'ball'
-  ];
+  const requiredRoles = ['referee'];
+  const optionalRoles = ['team_a','team_b','team_a_gk','team_b_gk'];
   const escapeHtml = text => String(text??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt = v=>Number.isFinite(Number(v))?Number(v).toLocaleString(undefined,{maximumFractionDigits:1}):'—';
   const duration = s => {let n=Math.max(0,Number(s)||0);return `${Math.floor(n/60).toString().padStart(2,'0')}:${(n%60).toFixed(1).padStart(4,'0')}`;};
@@ -106,10 +100,10 @@
     for(const role of Object.keys(roleNames)){
       const samples=p.reference_samples?.[role]||[];
       const count=samples.filter(Boolean).length;
-      const required=requiredRoles.includes(role), total=required?3:1;
+      const required=requiredRoles.includes(role), total=3;
       let status=$(`status-${role}`);
-      status.textContent=required?`${count} / 3${count===3?' ✓':''}`:(count?'Ready ✓':'Not set');
-      status.classList.toggle('ok',count===total);
+      status.textContent=`${count} / 3${count===3?' ✓':''}`;
+      status.classList.toggle('ok',required?count===3:count>0);
       const first=samples.findIndex(Boolean)+1;
       $(`thumb-${role}`).style.backgroundImage=first?`url(/api/projects/${p.id}/reference/${role}?sample=${first}&v=${Date.now()})`:'';
     }
@@ -117,8 +111,8 @@
     p.references_ready=ready;
     const role=state.role,samples=p.reference_samples?.[role]||[];
     const num=samples.filter(Boolean).length;
-    $('reference-active-status').textContent=`${roleNames[role]}: ${num} of ${requiredRoles.includes(role)?3:1} photos saved`;
-    $('reference-preview').innerHTML=Array.from({length:requiredRoles.includes(role)?3:1},(_,i)=>{
+    $('reference-active-status').textContent=`${roleNames[role]}: ${num} / 3 photos (${role==='referee'?'required':role==='ball'?'required with ball analysis':'optional'})`;
+    $('reference-preview').innerHTML=Array.from({length:3},(_,i)=>{
       const exists=Boolean(samples[i]);
       return `<button class="preview-slot ${exists?'ready':''}" type="button" data-ref-slot="${i+1}" aria-label="Select reference photo ${i+1}">${exists?`<img src="/api/projects/${p.id}/reference/${role}?sample=${i+1}&v=${Date.now()}" alt="${roleNames[role]} reference ${i+1}"/>`:'<span>+</span>'}<small>PHOTO ${i+1} ${exists?'✓':''}</small></button>`;
     }).join('');
@@ -152,7 +146,30 @@
   function drawCalibration(){const c=$('calib-canvas');const v=canvasInit(c,$('calib-frame'));if(!v)return;let {ctx,w,h}=v;ctx.clearRect(0,0,w,h);state.marked.forEach((p,i)=>{let x=p.uv[0]*w,y=p.uv[1]*h;ctx.beginPath();ctx.arc(x,y,11,0,2*Math.PI);ctx.fillStyle='#d1fe62';ctx.fill();ctx.strokeStyle='#182410';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#192310';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillText(String(i+1),x,y+4);});$('calib-count').textContent=`${state.marked.length} point${state.marked.length===1?'':'s'}`;$('landmark-list').innerHTML=state.marked.map((p,i)=>`<span class="landmark-chip">${i+1}. ${escapeHtml(state.landmarks.find(l=>l.id===p.id)?.label||p.id)}</span>`).join('');}
   async function saveCalibration(){if(!state.current)return;if(state.marked.length<4){notify('Select at least four widely spaced pitch landmarks.',true);return}try{let d=await api(`/api/projects/${state.current.id}/calibrate`,jsonOpts({points:state.marked,time:state.calibTime}));state.current.calibrated=true;showReferences();notify(`Calibration saved · Median error ${d.median_error_m} m.${d.warning?' '+d.warning:''}`);}catch(e){notify(e.message,true)}}
   function startPolling(id){clearInterval(state.poll);let poll=async()=>{try{let d=await api(`/api/projects/${id}`);state.current=d.project;let p=d.project;$('processing-stage').textContent=p.stage;$('progress-fill').style.width=`${p.progress||0}%`;$('progress-text').textContent=`${p.progress||0}% · Stage progress (not frame-level)`;$('processing-log').textContent=(p.log_tail?.length?p.log_tail:['Preparing local pipeline…']).join('\n');if(p.state==='done'||p.state==='failed'){clearInterval(state.poll);await loadProjects();if(p.state==='done'){notify('Analysis complete! Your dashboard is ready.');nav('analytics')}else{notify('Processing stopped: '+(p.error||'See the processing log'),true);switchSetup('config');}}}catch(e){console.error(e)}};poll();state.poll=setInterval(poll,2600)}
-  async function beginProcessing(){let p=state.current;if(!p)return;if(!requiredRoles.every(role=>(p.reference_samples?.[role]||[]).filter(Boolean).length===3)){notify('Save three photos for Team A, Team B, both goalkeepers, referees and the ball (18 total).',true);return}if(!p.calibrated){notify('Save pitch calibration before running the pipeline.',true);return}const b=$('start-processing');b.disabled=true;try{await api(`/api/projects/${p.id}/start`,jsonOpts({with_ball:$('include-ball').checked}));switchSetup('processing');startPolling(p.id);notify('Analysis started. You can monitor each processing stage here.')}catch(e){notify(e.message,true)}finally{b.disabled=false}}
+  async function beginProcessing(){
+    const p=state.current;
+    if(!p)return;
+    const count=role=>(p.reference_samples?.[role]||[]).filter(Boolean).length;
+    const withBall=$('include-ball').checked;
+    if(count('referee')!==3){
+      notify('Please capture three referee reference photos.',true);
+      return;
+    }
+    if(withBall && count('ball')!==3){
+      notify('Ball tracking requires three ball reference photos.',true);
+      return;
+    }
+    if(!p.calibrated){
+      notify('Save pitch calibration before running the pipeline.',true);
+      return;
+    }
+    const b=$('start-processing');b.disabled=true;
+    try{
+      await api(`/api/projects/${p.id}/start`,jsonOpts({with_ball:withBall}));
+      switchSetup('processing');startPolling(p.id);
+      notify('Analysis started. You can monitor each processing stage here.');
+    }catch(e){notify(e.message,true)}finally{b.disabled=false}
+  }
   function fileLink(files,label){return files.find(f=>f.label===label)}
   function videoCard(file, role, heading) {
     if (!file) return `<article class="match-video-card"><div class="video-card-heading"><strong>${heading}</strong><span>NOT GENERATED</span></div><div class="video-empty">No output yet. Check processing log for this stage.</div></article>`;
@@ -255,8 +272,7 @@
     $('calib-prev').addEventListener('click',()=>setCalibFrame(state.calibTime-1/(state.current?.meta.fps||30)));
     $('calib-next').addEventListener('click',()=>setCalibFrame(state.calibTime+1/(state.current?.meta.fps||30)));$('config-frame').addEventListener('load',drawCrop);$('calib-frame').addEventListener('load',drawCalibration);window.addEventListener('resize',()=>{drawCrop();drawCalibration()});attachCrop();
     document.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-role]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');state.role=b.dataset.role;
-      const optional=!requiredRoles.includes(state.role);
-      $('reference-slot').innerHTML=Array.from({length:optional?1:3},(_,i)=>`<option value="${i+1}">Photo ${i+1} / ${optional?1:3}</option>`).join('');
+      $('reference-slot').innerHTML=Array.from({length:3},(_,i)=>`<option value="${i+1}">Photo ${i+1} / 3</option>`).join('');
       const samples=state.current?.reference_samples?.[state.role]||[];
       $('reference-slot').value=String(Math.max(1,samples.findIndex(x=>!x)+1));
       state.crop=null;drawCrop();showReferences();}));
