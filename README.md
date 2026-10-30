@@ -84,3 +84,6 @@ Start with `python run.py check --clip bluevsred`, then run one offline annotate
 ### Offline setup with no website
 
 `python run.py references --clip bluevsred` lets you capture 3 Team A, 3 Team B, and 3 ball crops from chosen frames using OpenCV ROI windows. `python run.py calibrate --clip bluevsred` opens a first-frame pitch landmark picker. Either route writes the same reference/calibration paths consumed by the web and CLI pipelines.
+
+Built By Pranjal,Keshav & Milind 
+5Th Sem Mini Project
